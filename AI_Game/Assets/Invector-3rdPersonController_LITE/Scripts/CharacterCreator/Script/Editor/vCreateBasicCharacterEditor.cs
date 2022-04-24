@@ -1,19 +1,20 @@
-﻿using UnityEngine;
+﻿using Invector.vCamera;
 using UnityEditor;
-using UnityEngine.UI;
+using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Invector.vCharacterController
 {
     public class vCreateBasicCharacterEditor : EditorWindow
     {
         GUISkin skin;
-        GameObject charObj;
+        public GameObject template;
+        public bool useGameController = true;
+        public GameObject charObj;
         Animator charAnimator;
-        public  RuntimeAnimatorController controller;
-        public GameObject hud;
-        Vector2 rect = new Vector2(500, 540);
-        Vector2 scrool;
+
+        Vector2 rect = new Vector2(500, 590);
         Editor humanoidpreview;
         Texture2D m_Logo;
 
@@ -27,27 +28,33 @@ namespace Invector.vCharacterController
         }
 
         bool isHuman, isValidAvatar, charExist;
-        void OnEnable()
-        {           
+        public virtual void OnEnable()
+        {
             m_Logo = Resources.Load("icon_v2") as Texture2D;
-            charObj = Selection.activeGameObject;
+            if (Selection.activeObject)
+            {
+                charObj = Selection.activeGameObject;
+            }
             if (charObj)
             {
                 charAnimator = charObj.GetComponent<Animator>();
                 humanoidpreview = Editor.CreateEditor(charObj);
             }
-                
+
             charExist = charAnimator != null;
             isHuman = charExist ? charAnimator.isHuman : false;
             isValidAvatar = charExist ? charAnimator.avatar.isValid : false;
         }
 
-        void OnGUI()
+        public virtual void OnGUI()
         {
-            if (!skin) skin = Resources.Load("vSkin") as GUISkin;
+            if (!skin)
+            {
+                skin = Resources.Load("vSkin") as GUISkin;
+            }
+
             GUI.skin = skin;
 
-            this.maxSize = rect;
             this.minSize = rect;
             this.titleContent = new GUIContent("Character", null, "Third Person Character Creator");
             GUILayout.BeginVertical("Character Creator Window", "window");
@@ -57,30 +64,55 @@ namespace Invector.vCharacterController
             GUILayout.BeginVertical("box");
 
             if (!charObj)
+            {
                 EditorGUILayout.HelpBox("Make sure your FBX model is set as Humanoid!", MessageType.Info);
+            }
             else if (!charExist)
+            {
                 EditorGUILayout.HelpBox("Missing a Animator Component", MessageType.Error);
+            }
             else if (!isHuman)
+            {
                 EditorGUILayout.HelpBox("This is not a Humanoid", MessageType.Error);
+            }
             else if (!isValidAvatar)
+            {
                 EditorGUILayout.HelpBox(charObj.name + " is a invalid Humanoid", MessageType.Info);
+            }
 
+            template = EditorGUILayout.ObjectField("Template", template, typeof(GameObject), true, GUILayout.ExpandWidth(true)) as GameObject;
             charObj = EditorGUILayout.ObjectField("FBX Model", charObj, typeof(GameObject), true, GUILayout.ExpandWidth(true)) as GameObject;
 
-            if (GUI.changed && charObj != null && charObj.GetComponent<vThirdPersonController>() == null)
-                humanoidpreview = Editor.CreateEditor(charObj);
-            if (charObj != null && charObj.GetComponent<vThirdPersonController>() != null)
-                EditorGUILayout.HelpBox("This gameObject already contains the component vThirdPersonController", MessageType.Warning);
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("--- Optional---");
 
-            controller = EditorGUILayout.ObjectField("Animator Controller: ", controller, typeof(RuntimeAnimatorController), false) as RuntimeAnimatorController;            
-            
-            GUILayout.EndVertical();          
+            useGameController = EditorGUILayout.Toggle("Add GameController", useGameController);
+
+            if (GUI.changed && charObj != null && charObj.GetComponent<vThirdPersonController>() == null)
+            {
+                humanoidpreview = Editor.CreateEditor(charObj);
+            }
+
+            if (charObj != null && charObj.GetComponent<vThirdPersonController>() != null)
+            {
+                EditorGUILayout.HelpBox("This gameObject already contains the component vThirdPersonController", MessageType.Warning);
+            }
+
+            GUILayout.EndVertical();
+
+            //GUILayout.BeginHorizontal("box");
+            //EditorGUILayout.LabelField("Need to know how it works?");
+            //if (GUILayout.Button("Video Tutorial"))
+            //{
+            //    Application.OpenURL("https://www.youtube.com/watch?v=KQ5xha36tfE&index=1&list=PLvgXGzhT_qehtuCYl2oyL-LrWoT7fhg9d");
+            //}
+            //GUILayout.EndHorizontal();
 
             if (charObj)
             {
-                charAnimator = charObj.GetComponent<Animator>();    
+                charAnimator = charObj.GetComponent<Animator>();
             }
-                
+
             charExist = charAnimator != null;
             isHuman = charExist ? charAnimator.isHuman : false;
             isValidAvatar = charExist ? charAnimator.avatar.isValid : false;
@@ -90,11 +122,12 @@ namespace Invector.vCharacterController
                 DrawHumanoidPreview();
                 GUILayout.BeginHorizontal();
                 GUILayout.FlexibleSpace();
-                if (controller != null)
+
+                if (GUILayout.Button("Create"))
                 {
-                    if (GUILayout.Button("Create"))
-                        Create();
+                    Create();
                 }
+
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
             }
@@ -102,7 +135,7 @@ namespace Invector.vCharacterController
             GUILayout.EndVertical();
         }
 
-        bool CanCreate()
+        public virtual bool CanCreate()
         {
             return isValidAvatar && isHuman && charObj != null && charObj.GetComponent<vThirdPersonController>() == null;
         }
@@ -110,7 +143,7 @@ namespace Invector.vCharacterController
         /// <summary>
         /// Draw the Preview window
         /// </summary>
-        void DrawHumanoidPreview()
+        public virtual void DrawHumanoidPreview()
         {
             GUILayout.FlexibleSpace();
 
@@ -120,76 +153,98 @@ namespace Invector.vCharacterController
             }
         }
 
-        /// <summary>
-        /// Created the Third Person Controller
-        /// </summary>
-        void Create()
+        private GameObject InstantiateNewCharacter(GameObject selected)
         {
-            // base for the character
-            var _ThirdPerson = GameObject.Instantiate(charObj, Vector3.zero, Quaternion.identity) as GameObject;
-            if (!_ThirdPerson)
-                return;          
-            _ThirdPerson.name = "vBasicController_" + charObj.gameObject.name;
-            _ThirdPerson.AddComponent<vThirdPersonController>();
-            _ThirdPerson.AddComponent<vThirdPersonInput>();
-
-            var rigidbody = _ThirdPerson.AddComponent<Rigidbody>();
-            var collider = _ThirdPerson.AddComponent<CapsuleCollider>();
-
-            // camera
-            GameObject camera = null;
-            if (Camera.main == null)
+            if (selected == null)
             {
-                var cam = new GameObject("vThirdPersonCamera");
-                cam.AddComponent<Camera>();
-                cam.AddComponent<AudioListener>();
-                camera = cam;
-                camera.GetComponent<Camera>().tag = "MainCamera";
-                camera.GetComponent<Camera>().nearClipPlane = 0.03f;
+                return selected;
             }
-            else
+
+            if (selected.scene.IsValid())
             {
-                camera = Camera.main.gameObject;
-                camera.GetComponent<Camera>().tag = "MainCamera";
-                camera.GetComponent<Camera>().nearClipPlane = 0.03f;
-                camera.gameObject.name = "vThirdPersonCamera";
+                return selected;
             }
-            var tpcamera = camera.GetComponent<vThirdPersonCamera>();
 
-            if (tpcamera == null)
-                tpcamera = camera.AddComponent<vThirdPersonCamera>();           
-
-            _ThirdPerson.tag = "Player";
-
-            // rigidbody
-            rigidbody.useGravity = true;
-            rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
-            rigidbody.collisionDetectionMode = CollisionDetectionMode.Continuous;
-            rigidbody.mass = 50;
-
-            // capsule collider 
-            collider.height = ColliderHeight(_ThirdPerson.GetComponent<Animator>());
-            collider.center = new Vector3(0, (float)System.Math.Round(collider.height * 0.5f, 2), 0);
-            collider.radius = (float)System.Math.Round(collider.height * 0.15f, 2);
-
-            if (controller)
-                _ThirdPerson.GetComponent<Animator>().runtimeAnimatorController = controller;
-            Selection.activeGameObject = _ThirdPerson;
-            UnityEditor.SceneView.lastActiveSceneView.FrameSelected();
-            this.Close();
+            return PrefabUtility.InstantiatePrefab(selected) as GameObject;
         }
 
         /// <summary>
-        /// Capsule Collider height based on the Character height
+        /// Created the Third Person Controller
         /// </summary>
-        /// <param name="animator">animator humanoid</param>
-        /// <returns></returns>
-        float ColliderHeight(Animator animator)
+        public virtual void Create()
         {
-            var foot = animator.GetBoneTransform(HumanBodyBones.LeftFoot);
-            var hips = animator.GetBoneTransform(HumanBodyBones.Hips);
-            return (float)System.Math.Round(Vector3.Distance(foot.position, hips.position) * 2f, 2);
-        }       
+            // base for the character
+            GameObject newCharacter = InstantiateNewCharacter(charObj);
 
+            if (!newCharacter)
+            {
+                return;
+            }
+
+            GameObject _template = Instantiate(template, newCharacter.transform.position, newCharacter.transform.rotation);
+            Transform modelParent = _template.transform.Find("3D Model");
+
+            if (modelParent == null)
+            {
+                modelParent = new GameObject("3D Model").transform;
+                modelParent.parent = _template.transform;
+            }
+
+            newCharacter.transform.parent = modelParent;
+            newCharacter.transform.localPosition = Vector3.zero;
+            newCharacter.transform.localEulerAngles = Vector3.zero;
+            _template.name = "vBasicController_" + charObj.gameObject.name;
+
+            Animator animatorController = newCharacter.GetComponent<Animator>();
+            Animator animatorTemplate = _template.GetComponent<Animator>();
+
+            animatorTemplate.avatar = animatorController.avatar;
+            animatorTemplate.Rebind();
+            DestroyImmediate(animatorController);
+
+            newCharacter.tag = "Player";
+
+            var p_layer = LayerMask.NameToLayer("Player");
+            newCharacter.layer = p_layer;
+
+            foreach (Transform t in newCharacter.transform.GetComponentsInChildren<Transform>())
+            {
+                t.gameObject.layer = p_layer;
+            }
+
+            Selection.activeGameObject = _template;
+
+            // search for a MainCamera and attach to the tpCamera
+            var mainCamera = Camera.main;
+            var tpCamera = _template.GetComponentInChildren<vThirdPersonCamera>();
+
+            if (mainCamera == null)
+            {
+                mainCamera = new GameObject("MainCamera", typeof(Camera), typeof(AudioListener)).GetComponent<Camera>();
+                mainCamera.tag = "MainCamera";
+            }
+
+            if (mainCamera.transform.parent != tpCamera.transform)
+            {
+                mainCamera.transform.parent = tpCamera.transform;
+                mainCamera.transform.localPosition = Vector3.zero;
+                mainCamera.transform.localEulerAngles = Vector3.zero;
+            }
+
+            // add the gameController example
+            if (useGameController)
+            {
+                GameObject gC = null;
+                var gameController = FindObjectOfType<vGameController>();
+                if (gameController == null)
+                {
+                    gC = new GameObject("vGameController_Example");
+                    gC.AddComponent<vGameController>();
+                }
+            }
+
+            UnityEditor.SceneView.lastActiveSceneView.FrameSelected();
+            this.Close();
+        }
     }
 }

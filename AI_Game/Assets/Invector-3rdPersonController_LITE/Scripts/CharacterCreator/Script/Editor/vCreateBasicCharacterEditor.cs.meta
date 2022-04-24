@@ -1,13 +1,13 @@
 fileFormatVersion: 2
 guid: 0be34c7083a012248a83e5a948676d12
-timeCreated: 1565059693
-licenseType: Store
 MonoImporter:
+  externalObjects: {}
   serializedVersion: 2
   defaultReferences:
-  - controller: {fileID: 9100000, guid: cbd1db45c75e5b948a5befe9ecb80421, type: 2}
-  - cameraListData: {fileID: 11400000, guid: dbf2c7a931be7ae4d960bc178dc4dda6, type: 2}
-  - hud: {fileID: 100834, guid: 65d09cff7cef67d47a9d1f9a022f2d84, type: 2}
+  - m_PersistentViewDataDictionary: {instanceID: 0}
+  - template: {fileID: 4877562643351836832, guid: ada54f2848144624d9c179056240d24f,
+      type: 3}
+  - charObj: {fileID: 199726, guid: 5563b2c1cf35cae4f8490dfea2d2aa41, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
