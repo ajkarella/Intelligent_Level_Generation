@@ -135,6 +135,22 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 4241048447328776052}
     m_Modifications:
+    - target: {fileID: 1190492615087365309, guid: b116470b7c01d8744817e127aae88cfd, type: 3}
+      propertyPath: selectedToolbar
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1190492615087365309, guid: b116470b7c01d8744817e127aae88cfd, type: 3}
+      propertyPath: speedMultiplier
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1190492615087394359, guid: b116470b7c01d8744817e127aae88cfd, type: 3}
+      propertyPath: openCloseWindow
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1190492615087394359, guid: b116470b7c01d8744817e127aae88cfd, type: 3}
+      propertyPath: selectedToolbar
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1190492615094568211, guid: b116470b7c01d8744817e127aae88cfd, type: 3}
       propertyPath: m_ConnectedAnchor.x
       value: -18.555355
